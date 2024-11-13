@@ -186,7 +186,7 @@ class CliMain extends Disposable {
 			}
 		}
 		const sqmId = await resolveSqmId(stateService, logService);
-		const devDeviceId = await resolvedevDeviceId(logService);
+		const devDeviceId = await resolvedevDeviceId(stateService, logService);
 
 		// Initialize user data profiles after initializing the state
 		userDataProfilesService.init();
@@ -280,6 +280,14 @@ class CliMain extends Disposable {
 		// List Extensions
 		if (this.argv['list-extensions']) {
 			return instantiationService.createInstance(ExtensionManagementCLI, new ConsoleLogger(LogLevel.Info, false)).listExtensions(!!this.argv['show-versions'], this.argv['category'], profileLocation);
+		}
+
+		// Download Extensions
+		else if (this.argv['download-extension']) {
+			if (!this.argv['location']) {
+				throw new Error('The location argument is required to download an extension.');
+			}
+			return instantiationService.createInstance(ExtensionManagementCLI, new ConsoleLogger(LogLevel.Info, false)).downloadExtensions(this.argv['download-extension'], URI.parse(this.argv['location']));
 		}
 
 		// Install Extension

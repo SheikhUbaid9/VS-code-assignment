@@ -21,6 +21,7 @@ import { GeneralShellType } from '../../../../../platform/terminal/common/termin
 import { ITerminalCapabilityStore, TerminalCapability } from '../../../../../platform/terminal/common/capabilities/capabilities.js';
 import { IStorageService, StorageScope, StorageTarget } from '../../../../../platform/storage/common/storage.js';
 import { DeferredPromise } from '../../../../../base/common/async.js';
+import { CancellationToken } from '../../../../../base/common/cancellation.js';
 
 export const enum VSCodeSuggestOscPt {
 	Completions = 'Completions',
@@ -53,6 +54,9 @@ const enum RequestCompletionsSequence {
 }
 
 export class PwshCompletionProviderAddon extends Disposable implements ITerminalAddon, ITerminalCompletionProvider {
+	id: string = PwshCompletionProviderAddon.ID;
+	triggerCharacters?: string[] | undefined;
+	isBuiltin?: boolean = true;
 	static readonly ID = 'terminal.pwshCompletionProvider';
 	static cachedPwshCommands: Set<ISimpleCompletion>;
 	readonly shellTypes = [GeneralShellType.PowerShell];
@@ -241,7 +245,7 @@ export class PwshCompletionProviderAddon extends Disposable implements ITerminal
 		return this._completionsDeferred.p;
 	}
 
-	provideCompletions(value: string): Promise<ISimpleCompletion[] | undefined> {
+	provideCompletions(value: string, cursorPosition: number, token: CancellationToken): Promise<ISimpleCompletion[] | undefined> {
 		const builtinCompletionsConfig = this._configurationService.getValue<ITerminalSuggestConfiguration>(terminalSuggestConfigSection).builtinCompletions;
 		if (!this._codeCompletionsRequested && builtinCompletionsConfig.pwshCode) {
 			this._onDidRequestSendText.fire(RequestCompletionsSequence.Code);
@@ -262,7 +266,23 @@ export class PwshCompletionProviderAddon extends Disposable implements ITerminal
 		if (this._lastUserDataTimestamp > SuggestAddon.lastAcceptedCompletionTimestamp) {
 			this._onDidRequestSendText.fire(RequestCompletionsSequence.Contextual);
 		}
-		return this._getCompletionsPromise();
+		if (token.isCancellationRequested) {
+			return Promise.resolve(undefined);
+		}
+
+		return new Promise((resolve) => {
+			const completionPromise = this._getCompletionsPromise();
+			this._register(token.onCancellationRequested(() => {
+				this._resolveCompletions(undefined);
+			}));
+			completionPromise.then(result => {
+				if (token.isCancellationRequested) {
+					resolve(undefined);
+				} else {
+					resolve(result);
+				}
+			});
+		});
 	}
 }
 

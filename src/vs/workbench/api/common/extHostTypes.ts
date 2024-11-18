@@ -2114,6 +2114,29 @@ export class TerminalProfile implements vscode.TerminalProfile {
 	}
 }
 
+export class TerminalCompletionItem implements vscode.TerminalCompletionItem {
+	label: string;
+	icon?: ThemeIcon | undefined;
+	detail?: string | undefined;
+	isFile?: boolean | undefined;
+	isDirectory?: boolean | undefined;
+	isKeyword?: boolean | undefined;
+	replacementIndex: number;
+	replacementLength: number;
+
+	constructor(label: string, icon?: ThemeIcon, detail?: string, isFile?: boolean, isDirectory?: boolean, isKeyword?: boolean, replacementIndex?: number, replacementLength?: number) {
+		this.label = label;
+		this.icon = icon;
+		this.detail = detail;
+		this.isFile = isFile;
+		this.isDirectory = isDirectory;
+		this.isKeyword = isKeyword;
+		this.replacementIndex = replacementIndex ?? 0;
+		this.replacementLength = replacementLength ?? 0;
+	}
+}
+
+
 export enum TaskRevealKind {
 	Always = 1,
 

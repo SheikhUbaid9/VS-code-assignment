@@ -76,6 +76,9 @@ export class SelectionsOverlay extends DynamicViewOverlay {
 	private _selections: Range[];
 	private _renderResult: string[] | null;
 
+	private readonly maxLogsIndex = 10;
+	private currentIndex = 0;
+
 	constructor(context: ViewContext) {
 		super();
 		this._context = context;
@@ -286,6 +289,11 @@ export class SelectionsOverlay extends DynamicViewOverlay {
 			const top = hasMultipleSelections ? (lineNumber === firstLineNumber ? 1 : 0) : 0;
 			const bottom = hasMultipleSelections ? (lineNumber !== firstLineNumber && lineNumber === lastLineNumber ? 1 : 0) : 0;
 
+			if (this.currentIndex < this.maxLogsIndex) {
+				console.log('top ', top);
+				console.log('bottom ', bottom);
+			}
+
 			let innerCornerOutput = '';
 			let restOfSelectionOutput = '';
 
@@ -352,6 +360,7 @@ export class SelectionsOverlay extends DynamicViewOverlay {
 			output2[lineIndex][0] += innerCornerOutput;
 			output2[lineIndex][1] += restOfSelectionOutput;
 		}
+		this.currentIndex++;
 	}
 
 	private _previousFrameVisibleRangesWithStyle: (LineVisibleRangesWithStyle[] | null)[] = [];

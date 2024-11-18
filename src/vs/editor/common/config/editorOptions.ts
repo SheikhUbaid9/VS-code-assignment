@@ -1893,7 +1893,7 @@ class EditorFontInfo extends ComputedEditorOption<EditorOption.fontInfo, FontInf
 class EditorFontSize extends SimpleEditorOption<EditorOption.fontSize, number> {
 
 	constructor() {
-		super(
+		super(//
 			EditorOption.fontSize, 'fontSize', EDITOR_FONT_DEFAULTS.fontSize,
 			{
 				type: 'number',
@@ -1915,7 +1915,7 @@ class EditorFontSize extends SimpleEditorOption<EditorOption.fontSize, number> {
 	public override compute(env: IEnvironmentalOptions, options: IComputedEditorOptions, value: number): number {
 		// The final fontSize respects the editor zoom level.
 		// So take the result from env.fontInfo
-		return env.fontInfo.fontSize;
+		return env.fontInfo.fontSize; //
 	}
 }
 
@@ -2416,7 +2416,7 @@ export class EditorLayoutInfoComputer extends ComputedEditorOption<EditorOption.
 			outerWidth: env.outerWidth,
 			outerHeight: env.outerHeight,
 			isDominatedByLongLines: env.isDominatedByLongLines,
-			lineHeight: env.fontInfo.lineHeight,
+			lineHeight: env.fontInfo.lineHeight, //
 			viewLineCount: env.viewLineCount,
 			lineNumbersDigitCount: env.lineNumbersDigitCount,
 			typicalHalfwidthCharacterWidth: env.fontInfo.typicalHalfwidthCharacterWidth,
@@ -3095,7 +3095,7 @@ class EditorLineHeight extends EditorFloatOption<EditorOption.lineHeight> {
 		// The lineHeight is computed from the fontSize if it is 0.
 		// Moreover, the final lineHeight respects the editor zoom level.
 		// So take the result from env.fontInfo
-		return env.fontInfo.lineHeight;
+		return env.fontInfo.lineHeight; //
 	}
 }
 

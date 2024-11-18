@@ -395,8 +395,15 @@ export class InlineDecoration {
 	constructor(
 		public readonly range: Range,
 		public readonly inlineClassName: string,
-		public readonly type: InlineDecorationType
+		public readonly type: InlineDecorationType,
+		public readonly lineHeight?: number | undefined,
+		public readonly fontSize?: number | undefined,
 	) {
+		console.log('InlineDecoration');
+		console.log('range : ', range);
+		console.log('inlineClassName : ', inlineClassName);
+		console.log('type : ', type);
+		console.log('lineHeight : ', lineHeight);
 	}
 }
 
@@ -405,15 +412,25 @@ export class SingleLineInlineDecoration {
 		public readonly startOffset: number,
 		public readonly endOffset: number,
 		public readonly inlineClassName: string,
-		public readonly inlineClassNameAffectsLetterSpacing: boolean
+		public readonly inlineClassNameAffectsLetterSpacing: boolean,
+		public readonly lineHeight: number | undefined,
+		public readonly fontSize: number | undefined
 	) {
+		console.log('SingleLineInlineDecoration');
+		console.log('startOffset : ', startOffset);
+		console.log('endOffset : ', endOffset);
+		console.log('inlineClassName : ', inlineClassName);
+		console.log('inlineClassNameAffectsLetterSpacing : ', inlineClassNameAffectsLetterSpacing);
+		console.log('lineHeight : ', lineHeight);
 	}
 
 	toInlineDecoration(lineNumber: number): InlineDecoration {
 		return new InlineDecoration(
 			new Range(lineNumber, this.startOffset + 1, lineNumber, this.endOffset + 1),
 			this.inlineClassName,
-			this.inlineClassNameAffectsLetterSpacing ? InlineDecorationType.RegularAffectingLetterSpacing : InlineDecorationType.Regular
+			this.inlineClassNameAffectsLetterSpacing ? InlineDecorationType.RegularAffectingLetterSpacing : InlineDecorationType.Regular,
+			this.lineHeight,
+			this.fontSize
 		);
 	}
 }

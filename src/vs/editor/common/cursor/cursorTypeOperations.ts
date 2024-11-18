@@ -12,6 +12,8 @@ import { Position } from '../core/position.js';
 import { ICommand } from '../editorCommon.js';
 import { ITextModel } from '../model.js';
 import { AutoClosingOpenCharTypeOperation, AutoClosingOvertypeOperation, AutoClosingOvertypeWithInterceptorsOperation, AutoIndentOperation, CompositionOperation, EnterOperation, InterceptorElectricCharOperation, PasteOperation, shiftIndent, shouldSurroundChar, SimpleCharacterTypeOperation, SurroundSelectionOperation, TabOperation, TypeWithoutInterceptorsOperation, unshiftIndent } from './cursorTypeEditOperations.js';
+import { InputMode } from '../../../base/common/inputMode.js';
+import { ReplaceOvertypeCommandInComposition } from '../commands/replaceCommand.js';
 
 export class TypeOperations {
 
@@ -90,7 +92,7 @@ export class TypeOperations {
 
 		if (!insertedText || insertedText.length !== 1) {
 			// we're only interested in the case where a single character was inserted
-			return null;
+			return this._getOvertypeEdits(compositions) ?? null;
 		}
 
 		const ch = insertedText;
@@ -158,8 +160,23 @@ export class TypeOperations {
 		if (autoClosingOpenCharEdits !== undefined) {
 			return autoClosingOpenCharEdits;
 		}
+		return this._getOvertypeEdits(compositions) ?? null;
+	}
 
-		return null;
+	private static _getOvertypeEdits(compositions: CompositionOutcome[] | null): EditOperationResult | undefined {
+		if (!compositions) {
+			return undefined;
+		}
+		const inputMode = InputMode.getInputMode();
+		const isOvertypeMode = inputMode === 'overtype';
+		if (!isOvertypeMode) {
+			return undefined;
+		}
+		const commands = compositions.map(composition => new ReplaceOvertypeCommandInComposition(composition.insertedTextRange));
+		return new EditOperationResult(EditOperationType.TypingOther, commands, {
+			shouldPushStackElementBefore: true,
+			shouldPushStackElementAfter: false
+		});
 	}
 
 	public static typeWithInterceptors(isDoingComposition: boolean, prevEditOperationType: EditOperationType, config: CursorConfiguration, model: ITextModel, selections: Selection[], autoClosedCharacters: Range[], ch: string): EditOperationResult {
@@ -194,7 +211,7 @@ export class TypeOperations {
 			return interceptorElectricCharOperation;
 		}
 
-		return SimpleCharacterTypeOperation.getEdits(prevEditOperationType, selections, ch);
+		return SimpleCharacterTypeOperation.getEdits(prevEditOperationType, selections, ch, isDoingComposition);
 	}
 
 	public static typeWithoutInterceptors(prevEditOperationType: EditOperationType, config: CursorConfiguration, model: ITextModel, selections: Selection[], str: string): EditOperationResult {
@@ -210,5 +227,6 @@ export class CompositionOutcome {
 		public readonly insertedText: string,
 		public readonly insertedSelectionStart: number,
 		public readonly insertedSelectionEnd: number,
+		public readonly insertedTextRange: Range,
 	) { }
 }

@@ -6,7 +6,7 @@
 import { CharCode } from '../../../base/common/charCode.js';
 import { onUnexpectedError } from '../../../base/common/errors.js';
 import * as strings from '../../../base/common/strings.js';
-import { ReplaceCommand, ReplaceCommandWithOffsetCursorState, ReplaceCommandWithoutChangingPosition, ReplaceCommandThatPreservesSelection } from '../commands/replaceCommand.js';
+import { ReplaceCommand, ReplaceCommandWithOffsetCursorState, ReplaceCommandWithoutChangingPosition, ReplaceCommandThatPreservesSelection, ReplaceOvertypeCommand, OvertypePasteCommand } from '../commands/replaceCommand.js';
 import { ShiftCommand } from '../commands/shiftCommand.js';
 import { SurroundSelectionCommand } from '../commands/surroundSelectionCommand.js';
 import { CursorConfiguration, EditOperationResult, EditOperationType, ICursorSimpleModel, isQuote } from '../cursorCommon.js';
@@ -23,6 +23,7 @@ import { EditorAutoClosingStrategy, EditorAutoIndentStrategy } from '../config/e
 import { createScopedLineTokens } from '../languages/supports.js';
 import { getIndentActionForType, getIndentForEnter, getInheritIndentForLine } from '../languages/autoIndent.js';
 import { getEnterAction } from '../languages/enterAction.js';
+import { InputMode } from '../../../base/common/inputMode.js';
 
 export class AutoIndentOperation {
 
@@ -483,11 +484,13 @@ export class InterceptorElectricCharOperation {
 
 export class SimpleCharacterTypeOperation {
 
-	public static getEdits(prevEditOperationType: EditOperationType, selections: Selection[], ch: string): EditOperationResult {
+	public static getEdits(prevEditOperationType: EditOperationType, selections: Selection[], ch: string, isDoingComposition: boolean): EditOperationResult {
 		// A simple character type
 		const commands: ICommand[] = [];
 		for (let i = 0, len = selections.length; i < len; i++) {
-			commands[i] = new ReplaceCommand(selections[i], ch);
+			const inputMode = InputMode.getInputMode();
+			const ChosenReplaceCommand = inputMode === 'overtype' && !isDoingComposition ? ReplaceOvertypeCommand : ReplaceCommand;
+			commands[i] = new ChosenReplaceCommand(selections[i], ch);
 		}
 
 		const opType = getTypingOperation(ch, prevEditOperationType);
@@ -677,7 +680,10 @@ export class PasteOperation {
 	private static _distributedPaste(config: CursorConfiguration, model: ICursorSimpleModel, selections: Selection[], text: string[]): EditOperationResult {
 		const commands: ICommand[] = [];
 		for (let i = 0, len = selections.length; i < len; i++) {
-			commands[i] = new ReplaceCommand(selections[i], text[i]);
+			const inputMode = InputMode.getInputMode();
+			const shouldOvertypeOnPaste = config.overtypeOnPaste && inputMode === 'overtype';
+			const ChosenReplaceCommand = shouldOvertypeOnPaste ? OvertypePasteCommand : ReplaceCommand;
+			commands[i] = new ChosenReplaceCommand(selections[i], text[i]);
 		}
 		return new EditOperationResult(EditOperationType.Other, commands, {
 			shouldPushStackElementBefore: true,
@@ -701,7 +707,10 @@ export class PasteOperation {
 				const typeSelection = new Range(position.lineNumber, 1, position.lineNumber, 1);
 				commands[i] = new ReplaceCommandThatPreservesSelection(typeSelection, text, selection, true);
 			} else {
-				commands[i] = new ReplaceCommand(selection, text);
+				const inputMode = InputMode.getInputMode();
+				const shouldOvertypeOnPaste = config.overtypeOnPaste && inputMode === 'overtype';
+				const ChosenReplaceCommand = shouldOvertypeOnPaste ? OvertypePasteCommand : ReplaceCommand;
+				commands[i] = new ChosenReplaceCommand(selection, text);
 			}
 		}
 		return new EditOperationResult(EditOperationType.Other, commands, {
